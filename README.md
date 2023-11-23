@@ -4,7 +4,7 @@ n previous project [Implementing Web Solution https://github.com/Divinepj/Implem
 In this project,, I will be introducing the concept of file sharing for multiple servers to share the same web content and also a database for storing data related to the website using **RHEL-8.6.0_HVM-20220503-x86_64-2-Hourly2-GP2** 
 ![alt text](./IMG/Snipaste_2023-11-09_17-49-57.png)
 
-## STEP 1 Preparing NFS Server
+## Preparing NFS Server
 Create an EC2 instance (Red Hat Enterprise Linux 8 on AWS) on which we will setup our NFS(Network File Storage) Server.
 
 On this server we attach 2 EBS volumes 10GB each as external storage to our instance and create 3 logical volumes on it through which we will attach mounts from our external web servers.
