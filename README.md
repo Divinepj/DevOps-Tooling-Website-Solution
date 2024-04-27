@@ -1,5 +1,5 @@
 # DevOps-Tooling-Website-Solution
-n previous project [Implementing Web Solution https://github.com/Divinepj/Implementing-Wordpress-Web-Solution] I implemented a WordPress based solution that is ready to be filled with content and can be used as a full fledged website or blog. Moving further I will add some more value to my solution so that a member of a DevOps team could utilize.
+In previous project [Implementing Web Solution https://github.com/Divinepj/Implementing-Wordpress-Web-Solution] I implemented a WordPress based solution that is ready to be filled with content and can be used as a full fledged website or blog. Moving further I will add some more value to my solution so that a member of a DevOps team could utilize.
 
 In this project,, I will be introducing the concept of file sharing for multiple servers to share the same web content and also a database for storing data related to the website using **RHEL-8.6.0_HVM-20220503-x86_64-2-Hourly2-GP2** 
 ![alt text](./IMG/Snipaste_2023-11-09_17-49-57.png)
@@ -8,12 +8,14 @@ In this project,, I will be introducing the concept of file sharing for multiple
 Create an EC2 instance (Red Hat Enterprise Linux 8 on AWS) on which we will setup our NFS(Network File Storage) Server.
 
 On this server we attach 2 EBS volumes 10GB each as external storage to our instance and create 3 logical volumes on it through which we will attach mounts from our external web servers.
+![alt text](./IMG/Snipaste_2024-04-26_18-03-52.png)
 
--   3 logical volumes lv-opt, lv-apps and lv-logs
--   3 mount directory /mnt/opt, /mnt/apps and /mnt/logs
--   Webserver content will be stores in /apps, webserver logs in /logs and /opt will be used by Jenkins
+-   To be able to create logical volumes lv we have to create physical volumes on the partitions created to do this we need to install the lvm2 package by running sudo yum install lvm2 as shown below 
+![](./IMG/Snipaste_2024-04-26_18-04-18.png)
+we then proceed to create 3 logical volumes lv-opt, lv-apps and lv-logs as shown below
+![alt text](./IMG/Snipaste_2024-04-26_18-07-10.png)
 
-We first create the logigal volumes and `xfs` file systems as shown below
+We then create the `xfs` file systems as shown below
 ![alt text](./IMG/Snipaste_2023-11-09_18-29-56.png) and ![alt text](./IMG/Snipaste_2023-11-09_18-27-31.png)
 
 we therefore proceed to create directories `/mnt/apps`, `/mnt/opt`, and `/mnt/logs`
@@ -121,41 +123,64 @@ We will then connect our `/var/www` directory to our webserver with the `/mnt/ap
 
 We then ensure that our mounts remain intact when the server reboots. This is achieved by configuring the fstab directory by running the `sudo vi /etc/fstab` 
 add the following line <NFS-Server-Private-IP-Address>:/mnt/apps /var/www nfs defaults 0 0 as shown below ![alt text](./IMG/Snipaste_2023-11-09_19-57-55.png)
+we also mount the log folder for Apache on the webservers to NFS server's export for logs as shown below 
+![alt text](./IMG/Snipaste_2024-04-27_08-45-47.png)
+
+![alt text](./IMG/Snipaste_2024-04-27_08-50-47.png)
 
 ## Installing Apache and Php
 we then run the following commands to install both Apache and PHP 
-```
-{
-sudo yum install httpd -y
 
-sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+`sudo yum install httpd -y`  As shown below 
+![alt text](./IMG/Snipaste_2024-04-26_20-40-46.png)
 
-sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+`sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm` as shown below
 
-sudo dnf module reset php
+![alt text](./IMG/Snipaste_2024-04-26_20-41-38.png)
 
-sudo dnf module enable php:remi-7.4
 
-sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
+`sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm` as shown below
 
-sudo systemctl start php-fpm
+![alt text](./IMG/Snipaste_2024-04-26_20-42-33.png)
 
-sudo systemctl enable php-fpm
 
-setsebool -P httpd_execmem 1
-}
-```
+`sudo dnf module reset php` and `sudo dnf module enable php:remi-7.4` as shown below
+
+![alt text](./IMG/Snipaste_2024-04-26_20-44-13.png)
+
+we then run `sudo dnf install php php-opcache php-gd php-curl php-mysqlnd`
+
+![alt text](./IMG/Snipaste_2024-04-26_20-44-58.png)
+and then `sudo systemctl start php-fpm`, `sudo systemctl enable php-fpm` and `setsebool -P httpd_execmem 1` as shown below
+![alt text](./IMG/Snipaste_2024-04-26_20-46-07.png)
+
+
 We can see that both /var/www and /mnt/apps contains same content. This shows that both mount points are connected via NFS. ![alt text](./IMG/Snipaste_2023-11-09_20-09-57.png)
  and 
  ![alt text](./IMG/Snipaste_2023-11-09_20-10-21.png)
 
+We then repeat these steps for 2 other web servers.
+
 We locate the log folder for Apache on the Web Server and mount it to NFS server’s export for logs. Make sure the mount point will persist after reboot by running and `sudo mount -t nfs -o rw,nosuid <NFS private IP>:/mnt/logs /var/log/httpd` as shown below
 ![alt text](./IMG/Snipaste_2023-11-22_22-31-23.png)
+
+We then proceed to fork the tooling source code from `Darey.io Github Account` to my github account as shown below 
+![alt text](./IMG/Snipaste_2024-04-27_08-56-09.png)
+Then we proceed to install git on the terminal to enable us clone the content of the forked site to our servers by running `sudo yum install git` as shown below
+![alt text](./IMG/Snipaste_2024-04-27_09-00-05.png)
+
+we also endure that the content of html folder from the repository is deployed to `html` as shown below ![alt text](./IMG/Snipaste_2024-04-27_09-18-41.png)
 
 On the NFS Server, add web content into the /mnt/apps directory. This should contain a html folder. The same content will be present in the /var/www directory in the web server. ![alt text](./IMG/Snipaste_2023-11-09_20-55-36.png)
 
 Run <public_ip_address>/index.php on a web browser to access the site. Use public_ip_address of the web server. TCP port 80 should be open on the web broswer as shown below ![alt text](./IMG/Snipaste_2023-11-09_20-57-04.png)
 
-In the /var/www/html directory , edit the already written php script to connect to the database `sudo vi /var/www/html/functions.php` ![alt text]()
+In the /var/www/html directory , edit the already written php script to connect to the database `sudo vi /var/www/html/functions.php`. After the modification , connect to the database server from the web server by running `mysql -h <databse-private-ip> -u <db-username> -p <db-pasword> < tooling-db.sql` as shown below ![alt text](/IMG/Snipaste_2024-04-27_09-42-28.png)
 
-After the modification , connect to the database server from the web server by running `mysql -h <databse-private-ip> -u <db-username> -p <db-pasword> < tooling-db.sql` as shown below ![alt text]()
+we then proceed to create in MYSQL a new admin user with username `myuser` and password `password` as shown below ![alt text](./IMG/Snipaste_2024-04-27_09-53-03.png)
+
+we then proceed to login to the webserver by entering `<webserver public IP>/index.php` and login in with my user as shown below
+![alt text]()
+
+
+
